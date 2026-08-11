@@ -26,7 +26,7 @@ const TVT = {
     { query:"Sex Education", display:"Sex Education" },
     { query:"Future Man", display:"Future Man" },
     { query:"American Horror Story", display:"American Horror Story" },
-    { query:"Game of Thrones", display:"Game of Thrones" }
+    { query:"Game of Thrones", display:"Game of Thrones" },
     { query:"Party Down", display:"Party Down" },
   ],
 
