@@ -27,6 +27,7 @@ const TVT = {
     { query:"Future Man", display:"Future Man" },
     { query:"American Horror Story", display:"American Horror Story" },
     { query:"Game of Thrones", display:"Game of Thrones" }
+    { query:"Party Down", display:"Party Down" },
   ],
 
   getProgress(id){
