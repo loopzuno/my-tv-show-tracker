@@ -4,6 +4,7 @@ const TVT = {
 
   SHARED_SHOWS: [
     { query:"The Leftovers", display:"The Leftovers" },
+    { query:"The Bear", display:"The Bear" },
     { query:"Riverdale", display:"Riverdale" },
     { query:"Supernatural", display:"Supernatural" },
     { query:"Squid Game", display:"Squid Game" },
@@ -11,7 +12,6 @@ const TVT = {
     { query:"Hannibal", display:"Hannibal" },
     { query:"Fargo", display:"Fargo" },
     { query:"For All Mankind", display:"For All Mankind" },
-    { query:"The Bear", display:"The Bear" },
     { query:"The Umbrella Academy", display:"The Umbrella Academy" },
     { query:"Peaky Blinders", display:"Peaky Blinders" },
     { query:"Yellowjackets", display:"Yellowjackets" },
