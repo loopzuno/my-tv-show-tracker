@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>My TV Tracker</title><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <div class="eyebrow">Personal watchlist</div>
+      <h1 style="font-size:2.4rem;margin-top:5px">My TV Tracker</h1>
+      <div class="subtle">Your shows, your progress, your random picker.</div>
+    </div>
+  </div>
+
+  <section class="panel random-box">
+    <div class="eyebrow">Can't decide?</div>
+    <h2 style="margin-top:5px">Pick something for me</h2>
+    <p class="subtle">Chooses from your personal library and prefers shows where you still have aired episodes left.</p>
+    <button class="primary" id="randomBtn">🎲 Random Show</button>
+    <div class="random-result" id="randomResult" aria-live="polite"></div>
+  </section>
+
+  <div class="library-head">
+    <div><div class="eyebrow">Personal library</div><h2>My Shows</h2></div>
+    <div class="subtle" id="libraryStats">24 shows</div>
+  </div>
+
+  <main id="showGrid" class="show-grid">
+    <div class="loading">Loading your library…</div>
+  </main>
+
+  <div class="footer">
+    TV data provided by <a href="https://www.tvmaze.com/" target="_blank" rel="noopener">TVMaze</a>.
+    Episode progress is stored only in this browser.
+  </div>
+</div>
+<script src="shared.js"></script><script src="index.js"></script>
+</body>
+</html>

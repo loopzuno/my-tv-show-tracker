@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Show Tracker</title><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="brand" href="index.html">← My Shows</a>
+    <button id="removeShow" class="danger" style="display:none">Remove show</button>
+  </div>
+
+  <section class="hero">
+    <img class="poster" id="poster" alt="">
+    <div style="flex:1">
+      <div class="eyebrow">TV Watch Tracker</div>
+      <h1 id="showTitle">Loading…</h1>
+      <div class="meta" id="showMeta"></div>
+      <div class="progress-shell"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="stats">
+        <span id="episodeStat"></span><span id="percentStat"></span><span id="timeStat"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="controls">
+    <input id="episodeSearch" type="search" placeholder="Search episodes…">
+    <select id="filter">
+      <option value="all">All episodes</option>
+      <option value="unwatched">Unwatched only</option>
+      <option value="watched">Watched only</option>
+      <option value="upcoming">Upcoming only</option>
+    </select>
+    <button id="expandAll">Expand all</button><button id="collapseAll">Collapse all</button>
+  </div>
+
+  <div class="next" id="nextBox"><strong>Up next</strong><span>Loading…</span></div>
+  <main id="seasons"><div class="loading">Loading episodes…</div></main>
+
+  <div class="footer">TV data provided by <a href="https://www.tvmaze.com/" target="_blank" rel="noopener">TVMaze</a>.</div>
+</div>
+<script src="shared.js"></script><script src="show.js"></script>
+</body>
+</html>
