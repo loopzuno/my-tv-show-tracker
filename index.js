@@ -1,6 +1,7 @@
 
 const grid=document.querySelector("#showGrid");
 let summaries=[];
+let currentSort="manual";
 
 function looksLikeIntendedShow(config, show){
   if(!config.qualifier) return true;
@@ -60,10 +61,48 @@ async function loadLibrary(){
   renderLibrary();
 }
 
+function sortedSummaries(){
+  const arr=[...summaries];
+
+  if(currentSort==="manual") return arr;
+
+  return arr.sort((a,b)=>{
+    if(a.failed && !b.failed) return 1;
+    if(!a.failed && b.failed) return -1;
+    if(a.failed && b.failed) return a.config.display.localeCompare(b.config.display);
+
+    const aPct=a.total ? a.done/a.total : 0;
+    const bPct=b.total ? b.done/b.total : 0;
+    const aLeft=Math.max(0,a.total-a.done);
+    const bLeft=Math.max(0,b.total-b.done);
+
+    if(currentSort==="closest"){
+      if(bPct!==aPct) return bPct-aPct;
+      return aLeft-bLeft;
+    }
+    if(currentSort==="least"){
+      if(aPct!==bPct) return aPct-bPct;
+      return bLeft-aLeft;
+    }
+    if(currentSort==="fewest"){
+      if(aLeft!==bLeft) return aLeft-bLeft;
+      return bPct-aPct;
+    }
+    if(currentSort==="most"){
+      if(bLeft!==aLeft) return bLeft-aLeft;
+      return aPct-bPct;
+    }
+    if(currentSort==="az"){
+      return a.show.name.localeCompare(b.show.name);
+    }
+    return 0;
+  });
+}
+
 function renderLibrary(){
   grid.innerHTML="";
 
-  summaries.forEach(s=>{
+  sortedSummaries().forEach(s=>{
     if(s.failed){
       const card=document.createElement("div");
       card.className="show-card";
@@ -77,6 +116,7 @@ function renderLibrary(){
     const {show,done,total,config}=s;
     const pct=total?Math.round(done/total*100):0;
     const caught=total>0&&done===total;
+    const left=Math.max(0,total-done);
     const tracking=config.startSeason?` · from S${config.startSeason}`:"";
 
     const a=document.createElement("a");
@@ -86,7 +126,7 @@ function renderLibrary(){
       ${show.image?.medium?`<img src="${show.image.medium}" alt="${show.name} poster">`:`<div class="card-poster poster-fallback">${show.name}</div>`}
       <div class="card-body">
         <div class="card-title">${show.name}</div>
-        <div class="card-meta">${caught?"Caught up!":`${done} / ${total} aired episodes · ${pct}%`}${tracking}</div>
+        <div class="card-meta">${caught?"Caught up!":`${done} / ${total} aired episodes · ${pct}% · ${left} left`}${tracking}</div>
         <div class="card-progress"><span style="width:${pct}%"></span></div>
       </div>`;
     grid.appendChild(a);
@@ -111,4 +151,8 @@ function randomShow(){
 }
 
 document.querySelector("#randomBtn").addEventListener("click",randomShow);
+document.querySelector("#sortShows").addEventListener("change",e=>{
+  currentSort=e.target.value;
+  renderLibrary();
+});
 loadLibrary();

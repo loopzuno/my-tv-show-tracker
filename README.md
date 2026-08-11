@@ -25,3 +25,16 @@ Your existing progress storage key is unchanged, so replacing the site files doe
 not erase existing browser checkmarks.
 
 TV data provided by TVMaze.
+
+
+## v3 sorting
+
+The homepage now includes:
+- My order
+- Closest to finished
+- Least watched
+- Fewest episodes left
+- Most episodes left
+- A–Z
+
+Sorting is temporary and does not change the order in `shared.js`.
