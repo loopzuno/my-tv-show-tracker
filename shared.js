@@ -28,7 +28,6 @@ const TVT = {
     { query:"American Horror Story", display:"American Horror Story" },
     { query:"Game of Thrones", display:"Game of Thrones" },
     { query:"Party Down", display:"Party Down" },
-
     { query:"The Simpsons", display:"The Simpsons", startSeason:37 },
     { query:"Bob's Burgers", display:"Bob's Burgers", startSeason:16 },
     { query:"One Piece", display:"One Piece", qualifier:"Netflix" },
@@ -36,7 +35,9 @@ const TVT = {
     { query:"Ted Lasso", display:"Ted Lasso" },
     { query:"Class of '07", display:"Class of '07" },
     { query:"The Movies That Made Us", display:"The Movies That Made Us" },
-    { query:"Dark Side of the Ring", display:"Dark Side of the Ring" }
+    { query:"Dark Side of the Ring", display:"Dark Side of the Ring" } ,
+    { query:"Pushing Daisies", display:"Pushing Daisies" },
+    { query:"The Terror", display:"The Terror" },
   ],
 
   getProgress(id){
