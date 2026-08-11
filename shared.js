@@ -36,7 +36,7 @@ const TVT = {
     { query:"Class of '07", display:"Class of '07" },
     { query:"The Movies That Made Us", display:"The Movies That Made Us" },
     { query:"Dark Side of the Ring", display:"Dark Side of the Ring" } ,
-    { query:"Pushing Daisies", display:"Pushing Daisies" },
+    { query:"Your Friends & Neighbors", display:"Your Friends & Neighbors" },
     { query:"The Terror", display:"The Terror" },
   ],
 
