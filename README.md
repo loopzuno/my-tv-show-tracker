@@ -1,24 +1,27 @@
-# My Personal TV Tracker
+# My Personal TV Tracker v2
 
-A separate personal tracker using the same design as Our TV Tracker.
+Adds support for tracking a show beginning with a specific season.
 
-Included shows:
-The Leftovers, Riverdale, Supernatural, Squid Game, Silo, Hannibal, Fargo,
-For All Mankind, The Bear, The Umbrella Academy, Peaky Blinders, Yellowjackets,
-The X-Files, Archer, Murderbot, Andor, You, Alice in Borderland, Abbott Elementary,
-Doctor Who (2005 revival), Sex Education, Future Man, American Horror Story,
-and Game of Thrones.
+Example:
+`{ query:"The Simpsons", display:"The Simpsons", startSeason:37 },`
 
-## GitHub Pages
+For shows with `startSeason`, older seasons:
+- do not appear on the show's tracker page
+- do not count toward progress
+- do not count toward remaining watch time
+- do not affect the Random Show button
 
-Create a separate repository such as `my-tv-tracker`, upload the files from this
-folder to the repository root, then enable GitHub Pages from the `main` branch
-and `/(root)`.
+New additions in this version:
+- The Simpsons — Season 37 onward
+- Bob's Burgers — Season 16 onward
+- One Piece — Netflix live-action series
+- Malcolm in the Middle
+- Ted Lasso
+- Class of '07
+- The Movies That Made Us
+- Dark Side of the Ring
 
-## Progress
-
-Episode progress is saved only in each browser via localStorage.
-
-## Data
+Your existing progress storage key is unchanged, so replacing the site files does
+not erase existing browser checkmarks.
 
 TV data provided by TVMaze.

@@ -28,6 +28,15 @@ const TVT = {
     { query:"American Horror Story", display:"American Horror Story" },
     { query:"Game of Thrones", display:"Game of Thrones" },
     { query:"Party Down", display:"Party Down" },
+
+    { query:"The Simpsons", display:"The Simpsons", startSeason:37 },
+    { query:"Bob's Burgers", display:"Bob's Burgers", startSeason:16 },
+    { query:"One Piece", display:"One Piece", qualifier:"Netflix" },
+    { query:"Malcolm in the Middle", display:"Malcolm in the Middle" },
+    { query:"Ted Lasso", display:"Ted Lasso" },
+    { query:"Class of '07", display:"Class of '07" },
+    { query:"The Movies That Made Us", display:"The Movies That Made Us" },
+    { query:"Dark Side of the Ring", display:"Dark Side of the Ring" }
   ],
 
   getProgress(id){
@@ -44,5 +53,15 @@ const TVT = {
   formatMinutes(mins){
     const h=Math.floor(mins/60),m=mins%60;
     return h?`${h}h ${m}m`:`${m}m`;
+  },
+  configForShow(show){
+    const name=(show?.name||"").toLowerCase();
+    return this.SHARED_SHOWS.find(c =>
+      c.display.toLowerCase()===name || c.query.toLowerCase()===name
+    ) || null;
+  },
+  filterTrackedEpisodes(episodes, config){
+    const start=config?.startSeason || 1;
+    return episodes.filter(e => e.season && e.number && e.season >= start);
   }
 };

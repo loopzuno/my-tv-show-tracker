@@ -35,6 +35,7 @@ async function resolveShow(config){
 async function loadLibrary(){
   grid.innerHTML='<div class="loading">Loading your library…</div>';
   const items=[];
+
   for(let i=0;i<TVT.SHARED_SHOWS.length;i+=5){
     const batch=TVT.SHARED_SHOWS.slice(i,i+5);
     const done=await Promise.all(batch.map(async config=>{
@@ -47,9 +48,12 @@ async function loadLibrary(){
 
   summaries=items.map(({config,show,episodes,failed})=>{
     if(failed||!show) return {config,failed:true};
-    const aired=episodes.filter(e=>e.season&&e.number&&TVT.isAired(e));
+
+    const tracked=TVT.filterTrackedEpisodes(episodes,config);
+    const aired=tracked.filter(TVT.isAired);
     const p=TVT.getProgress(show.id);
     const done=aired.filter(e=>p[String(e.id)]).length;
+
     return {config,show,aired,done,total:aired.length};
   });
 
@@ -58,6 +62,7 @@ async function loadLibrary(){
 
 function renderLibrary(){
   grid.innerHTML="";
+
   summaries.forEach(s=>{
     if(s.failed){
       const card=document.createElement("div");
@@ -69,9 +74,11 @@ function renderLibrary(){
       return;
     }
 
-    const {show,done,total}=s;
+    const {show,done,total,config}=s;
     const pct=total?Math.round(done/total*100):0;
     const caught=total>0&&done===total;
+    const tracking=config.startSeason?` · from S${config.startSeason}`:"";
+
     const a=document.createElement("a");
     a.className="show-card";
     a.href=`show.html?id=${show.id}`;
@@ -79,11 +86,12 @@ function renderLibrary(){
       ${show.image?.medium?`<img src="${show.image.medium}" alt="${show.name} poster">`:`<div class="card-poster poster-fallback">${show.name}</div>`}
       <div class="card-body">
         <div class="card-title">${show.name}</div>
-        <div class="card-meta">${caught?"Caught up!":`${done} / ${total} aired episodes · ${pct}%`}</div>
+        <div class="card-meta">${caught?"Caught up!":`${done} / ${total} aired episodes · ${pct}%`}${tracking}</div>
         <div class="card-progress"><span style="width:${pct}%"></span></div>
       </div>`;
     grid.appendChild(a);
   });
+
   document.querySelector("#libraryStats").textContent=`${TVT.SHARED_SHOWS.length} shows`;
 }
 
@@ -98,6 +106,7 @@ function randomShow(){
   const pick=pool[Math.floor(Math.random()*pool.length)];
   const p=TVT.getProgress(pick.show.id);
   const next=pick.aired.find(e=>!p[String(e.id)]);
+
   out.innerHTML=`🎲 <strong>${pick.show.name}</strong>${next?` — next up: S${next.season}E${next.number}, ${next.name}`:" — you're caught up!"} <a href="show.html?id=${pick.show.id}">Open tracker →</a>`;
 }
 
