@@ -1,158 +1,26 @@
 
-const grid=document.querySelector("#showGrid");
-let summaries=[];
-let currentSort="manual";
-
-function looksLikeIntendedShow(config, show){
-  if(!config.qualifier) return true;
-  const haystack=[
-    show.premiered, show.ended, show.name,
-    show.network?.name, show.webChannel?.name, show.officialSite,
-    ...(show.genres||[])
-  ].filter(Boolean).join(" ").toLowerCase();
-  return haystack.includes(config.qualifier.toLowerCase());
-}
-
-async function resolveShow(config){
-  const r=await fetch(`https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(config.query)}&embed=episodes`);
-  if(!r.ok) throw new Error(`Could not resolve ${config.display}`);
-  let show=await r.json();
-
-  if(config.qualifier && !looksLikeIntendedShow(config,show)){
-    const sr=await fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(config.query)}`);
-    if(sr.ok){
-      const options=await sr.json();
-      const found=options.map(x=>x.show).find(s=>looksLikeIntendedShow(config,s));
-      if(found){
-        const full=await fetch(`https://api.tvmaze.com/shows/${found.id}?embed=episodes`);
-        if(full.ok) show=await full.json();
-      }
-    }
+const grid=document.querySelector("#showGrid");let summaries=[];let currentSort="manual";
+function looksLikeIntendedShow(c,s){if(!c.qualifier)return true;return [s.premiered,s.ended,s.name,s.network?.name,s.webChannel?.name,s.officialSite,...(s.genres||[])].filter(Boolean).join(" ").toLowerCase().includes(c.qualifier.toLowerCase())}
+function summarize(c,s,eps){const tracked=TVT.filterTrackedEpisodes(eps,c),aired=tracked.filter(TVT.isAired),p=TVT.getProgress(s.id),done=aired.filter(e=>p[String(e.id)]).length;return {config:c,show:s,aired,done,total:aired.length,episodes:eps}}
+async function resolveShow(c){
+  const cached=TVT.getCachedShow(c.query);
+  if(cached?.show?.id){
+    try{
+      const [sr,er]=await Promise.all([fetch(`https://api.tvmaze.com/shows/${cached.show.id}`),fetch(`https://api.tvmaze.com/shows/${cached.show.id}/episodes`)]);
+      if(sr.ok&&er.ok){const s=await sr.json(),eps=await er.json();TVT.setCachedShow(c.query,{show:s,episodes:eps});return {config:c,show:s,episodes:eps}}
+    }catch{}
   }
-
-  return {config,show,episodes:show._embedded?.episodes||[]};
+  const r=await fetch(`https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(c.query)}&embed=episodes`);if(!r.ok)throw new Error();let s=await r.json();
+  if(c.qualifier&&!looksLikeIntendedShow(c,s)){const sr=await fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(c.query)}`);if(sr.ok){const opts=await sr.json(),f=opts.map(x=>x.show).find(x=>looksLikeIntendedShow(c,x));if(f){const full=await fetch(`https://api.tvmaze.com/shows/${f.id}?embed=episodes`);if(full.ok)s=await full.json()}}}
+  const eps=s._embedded?.episodes||[];TVT.setCachedShow(c.query,{show:s,episodes:eps});return {config:c,show:s,episodes:eps}
 }
-
-async function loadLibrary(){
-  grid.innerHTML='<div class="loading">Loading your library…</div>';
-  const items=[];
-
-  for(let i=0;i<TVT.SHARED_SHOWS.length;i+=5){
-    const batch=TVT.SHARED_SHOWS.slice(i,i+5);
-    const done=await Promise.all(batch.map(async config=>{
-      try{return await resolveShow(config)}
-      catch{return {config,show:null,episodes:[],failed:true}}
-    }));
-    items.push(...done);
-    if(i+5<TVT.SHARED_SHOWS.length) await new Promise(r=>setTimeout(r,350));
-  }
-
-  summaries=items.map(({config,show,episodes,failed})=>{
-    if(failed||!show) return {config,failed:true};
-
-    const tracked=TVT.filterTrackedEpisodes(episodes,config);
-    const aired=tracked.filter(TVT.isAired);
-    const p=TVT.getProgress(show.id);
-    const done=aired.filter(e=>p[String(e.id)]).length;
-
-    return {config,show,aired,done,total:aired.length};
-  });
-
-  renderLibrary();
+function renderFromCacheImmediately(){summaries=TVT.SHARED_SHOWS.map(c=>{const x=TVT.getCachedShow(c.query);return x?.show&&Array.isArray(x.episodes)?summarize(c,x.show,x.episodes):{config:c,failed:true,loading:true}});renderLibrary()}
+async function refreshLibrary(){
+  for(let i=0;i<TVT.SHARED_SHOWS.length;i+=6){const batch=TVT.SHARED_SHOWS.slice(i,i+6),done=await Promise.all(batch.map(async c=>{try{const r=await resolveShow(c);return summarize(r.config,r.show,r.episodes)}catch{const x=TVT.getCachedShow(c.query);return x?.show&&Array.isArray(x.episodes)?summarize(c,x.show,x.episodes):{config:c,failed:true}}}));
+    done.forEach(u=>{const idx=summaries.findIndex(s=>s.config.query===u.config.query);if(idx>=0)summaries[idx]=u});renderLibrary();if(i+6<TVT.SHARED_SHOWS.length)await new Promise(r=>setTimeout(r,180))}
 }
-
-function sortedSummaries(){
-  const arr=[...summaries];
-
-  if(currentSort==="manual") return arr;
-
-  return arr.sort((a,b)=>{
-    if(a.failed && !b.failed) return 1;
-    if(!a.failed && b.failed) return -1;
-    if(a.failed && b.failed) return a.config.display.localeCompare(b.config.display);
-
-    const aPct=a.total ? a.done/a.total : 0;
-    const bPct=b.total ? b.done/b.total : 0;
-    const aLeft=Math.max(0,a.total-a.done);
-    const bLeft=Math.max(0,b.total-b.done);
-
-    if(currentSort==="closest"){
-      if(bPct!==aPct) return bPct-aPct;
-      return aLeft-bLeft;
-    }
-    if(currentSort==="least"){
-      if(aPct!==bPct) return aPct-bPct;
-      return bLeft-aLeft;
-    }
-    if(currentSort==="fewest"){
-      if(aLeft!==bLeft) return aLeft-bLeft;
-      return bPct-aPct;
-    }
-    if(currentSort==="most"){
-      if(bLeft!==aLeft) return bLeft-aLeft;
-      return aPct-bPct;
-    }
-    if(currentSort==="az"){
-      return a.show.name.localeCompare(b.show.name);
-    }
-    return 0;
-  });
-}
-
-function renderLibrary(){
-  grid.innerHTML="";
-
-  sortedSummaries().forEach(s=>{
-    if(s.failed){
-      const card=document.createElement("div");
-      card.className="show-card";
-      card.innerHTML=`<div class="card-poster poster-fallback">${s.config.display}</div>
-        <div class="card-body"><div class="card-title">${s.config.display}</div>
-        <div class="card-meta">Could not load TV data</div></div>`;
-      grid.appendChild(card);
-      return;
-    }
-
-    const {show,done,total,config}=s;
-    const pct=total?Math.round(done/total*100):0;
-    const caught=total>0&&done===total;
-    const left=Math.max(0,total-done);
-    const tracking=config.startSeason?` · from S${config.startSeason}`:"";
-
-    const a=document.createElement("a");
-    a.className="show-card";
-    a.href=`show.html?id=${show.id}`;
-    a.innerHTML=`
-      ${show.image?.medium?`<img src="${show.image.medium}" alt="${show.name} poster">`:`<div class="card-poster poster-fallback">${show.name}</div>`}
-      <div class="card-body">
-        <div class="card-title">${show.name}</div>
-        <div class="card-meta">${caught?"Caught up!":`${done} / ${total} aired episodes · ${pct}% · ${left} left`}${tracking}</div>
-        <div class="card-progress"><span style="width:${pct}%"></span></div>
-      </div>`;
-    grid.appendChild(a);
-  });
-
-  document.querySelector("#libraryStats").textContent=`${TVT.SHARED_SHOWS.length} shows`;
-}
-
-function randomShow(){
-  const out=document.querySelector("#randomResult");
-  const usable=summaries.filter(s=>!s.failed&&s.total);
-  if(!usable.length){out.textContent="The library is still loading.";return;}
-
-  let pool=usable.filter(s=>s.done<s.total);
-  if(!pool.length) pool=usable;
-
-  const pick=pool[Math.floor(Math.random()*pool.length)];
-  const p=TVT.getProgress(pick.show.id);
-  const next=pick.aired.find(e=>!p[String(e.id)]);
-
-  out.innerHTML=`🎲 <strong>${pick.show.name}</strong>${next?` — next up: S${next.season}E${next.number}, ${next.name}`:" — you're caught up!"} <a href="show.html?id=${pick.show.id}">Open tracker →</a>`;
-}
-
-document.querySelector("#randomBtn").addEventListener("click",randomShow);
-document.querySelector("#sortShows").addEventListener("change",e=>{
-  currentSort=e.target.value;
-  renderLibrary();
-});
-loadLibrary();
+function sortedSummaries(){const a=[...summaries];if(currentSort==="manual")return a;return a.sort((x,y)=>{if(x.failed&&!y.failed)return 1;if(!x.failed&&y.failed)return -1;if(x.failed&&y.failed)return x.config.display.localeCompare(y.config.display);const xp=x.total?x.done/x.total:0,yp=y.total?y.done/y.total:0,xl=Math.max(0,x.total-x.done),yl=Math.max(0,y.total-y.done);if(currentSort==="closest")return yp!==xp?yp-xp:xl-yl;if(currentSort==="least")return xp!==yp?xp-yp:yl-xl;if(currentSort==="fewest")return xl!==yl?xl-yl:yp-xp;if(currentSort==="most")return yl!==xl?yl-xl:xp-yp;if(currentSort==="az")return x.show.name.localeCompare(y.show.name);return 0})}
+function renderLibrary(){grid.innerHTML="";sortedSummaries().forEach(s=>{if(s.failed){const c=document.createElement("div");c.className="show-card";c.innerHTML=`<div class="card-poster poster-fallback">${s.config.display}</div><div class="card-body"><div class="card-title">${s.config.display}</div><div class="card-meta">${s.loading?"Loading…":"Could not load TV data"}</div></div>`;grid.appendChild(c);return}
+  const {show,done,total,config}=s,pct=total?Math.round(done/total*100):0,caught=total>0&&done===total,left=Math.max(0,total-done),tracking=config.startSeason?` · from S${config.startSeason}`:"";const a=document.createElement("a");a.className="show-card";a.href=`show.html?id=${show.id}`;a.innerHTML=`${show.image?.medium?`<img src="${show.image.medium}" alt="${show.name} poster">`:`<div class="card-poster poster-fallback">${show.name}</div>`}<div class="card-body"><div class="card-title">${show.name}</div><div class="card-meta">${caught?"Caught up!":`${done} / ${total} aired episodes · ${pct}% · ${left} left`}${tracking}</div><div class="card-progress"><span style="width:${pct}%"></span></div></div>`;grid.appendChild(a)});document.querySelector("#libraryStats").textContent=`${TVT.SHARED_SHOWS.length} shows`}
+function randomShow(){const out=document.querySelector("#randomResult"),usable=summaries.filter(s=>!s.failed&&s.total);if(!usable.length){out.textContent="The library is still loading.";return}let pool=usable.filter(s=>s.done<s.total);if(!pool.length)pool=usable;const pick=pool[Math.floor(Math.random()*pool.length)],p=TVT.getProgress(pick.show.id),next=pick.aired.find(e=>!p[String(e.id)]);out.innerHTML=`🎲 <strong>${pick.show.name}</strong>${next?` — next up: S${next.season}E${next.number}, ${next.name}`:" — you're caught up!"} <a href="show.html?id=${pick.show.id}">Open tracker →</a>`}
+document.querySelector("#randomBtn").addEventListener("click",randomShow);document.querySelector("#sortShows").addEventListener("change",e=>{currentSort=e.target.value;renderLibrary()});renderFromCacheImmediately();refreshLibrary();
