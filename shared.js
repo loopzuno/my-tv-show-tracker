@@ -35,7 +35,8 @@ const TVT={
     {query:"Ted Lasso",display:"Ted Lasso"},
     {query:"Class of '07",display:"Class of '07"},
     {query:"The Movies That Made Us",display:"The Movies That Made Us"},
-    {query:"Dark Side of the Ring",display:"Dark Side of the Ring"}
+    {query:"Dark Side of the Ring",display:"Dark Side of the Ring"},
+    {query:"Widow's Bay",display:"Widow's Bay"}
   ],
   getProgress(id){return JSON.parse(localStorage.getItem(this.progressKey(id))||"{}");},
   saveProgress(id,p){localStorage.setItem(this.progressKey(id),JSON.stringify(p));},
